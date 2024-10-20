@@ -181,11 +181,51 @@ const MainForm = () => {
               placeholder="Reason for discharge"
             />
           </div>
+          <div>
+            <label>Duration of Follow-up Start (months):</label>
+            <input
+              type="number"
+              name="followupDurationStart"
+              value={formData.followupDurationStart}
+              onChange={handleChange}
+              placeholder="Minimum follow-up (months)"
+            />
+          </div>
+          <div>
+            <label>Duration of Follow-up End (months):</label>
+            <input
+              type="number"
+              name="followupDurationEnd"
+              value={formData.followupDurationEnd}
+              onChange={handleChange}
+              placeholder="Maximum follow-up (months)"
+            />
+          </div>
         </section>
 
         {/* Diagnostic & Evaluation Data */}
         <section>
           <h2>Diagnostic & Evaluation Data</h2>
+          <div>
+            <label>Baros Score:</label>
+            <input
+              type="number"
+              name="barosScore"
+              value={formData.barosScore}
+              onChange={handleChange}
+              placeholder="Score"
+            />
+          </div>
+          <div>
+            <label>Baros Table:</label>
+            <input
+              type="text"
+              name="barosTable"
+              value={formData.barosTable}
+              onChange={handleChange}
+              placeholder="Assessment"
+            />
+          </div>
           <div>
             <label>Problem (Primary Diagnosis):</label>
             <input
@@ -194,6 +234,26 @@ const MainForm = () => {
               value={formData.problem}
               onChange={handleChange}
               placeholder="Main Diagnosis"
+            />
+          </div>
+          <div>
+            <label>Secondary Diagnosis:</label>
+            <input
+              type="text"
+              name="secondaryDiagnosis"
+              value={formData.secondaryDiagnosis}
+              onChange={handleChange}
+              placeholder="Secondary Diagnosis"
+            />
+          </div>
+          <div>
+            <label>Associated Causes:</label>
+            <input
+              type="text"
+              name="associatedCauses"
+              value={formData.associatedCauses}
+              onChange={handleChange}
+              placeholder="Causes"
             />
           </div>
         </section>
@@ -209,6 +269,39 @@ const MainForm = () => {
               value={formData.procedure}
               onChange={handleChange}
               placeholder="Procedure details"
+            />
+          </div>
+          <div>
+            <label>Procedure Time Start:</label>
+            <input
+              type="datetime-local"
+              name="procedureTimeStart"
+              value={formData.procedureTimeStart}
+              onChange={handleChange}
+            />
+          </div>
+          <div>
+            <label>Procedure Time End:</label>
+            <input
+              type="datetime-local"
+              name="procedureTimeEnd"
+              value={formData.procedureTimeEnd}
+              onChange={handleChange}
+            />
+          </div>
+        </section>
+
+        {/* Additional Metadata */}
+        <section>
+          <h2>Additional Metadata</h2>
+          <div>
+            <label>Committer (Physician):</label>
+            <input
+              type="text"
+              name="committerName"
+              value={formData.committerName}
+              onChange={handleChange}
+              placeholder="Physician Name"
             />
           </div>
         </section>
