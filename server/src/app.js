@@ -113,21 +113,23 @@ const buildQuery = (filters) => {
     });
   }
 
-  // Patient discharge
+  function convertToISO(dateString) {
+    const [day, month, year] = dateString.split("-");
+    return `${day}-${month}-${year}T`; // ISO format
+  }
   if (filters.dischargeDateStart && filters.dischargeDateEnd) {
+    const dischargeDateStartISO = convertToISO(filters.dischargeDateStart);
+    const dischargeDateEndISO = convertToISO(filters.dischargeDateEnd)
+
+    console.log(dischargeDateStartISO);
+    console.log(dischargeDateEndISO);
+
+    
     query["content"].$elemMatch.$and.push({
       "data.items": {
         $elemMatch: {
-          archetype_node_id: "openEHR-EHR-ADMIN_ENTRY.patient_discharge.v1",
-          items: {
-            $elemMatch: {
-              archetype_node_id: "at0002",
-              "value.value": {
-                $gte: new Date(filters.dischargeDateStart),
-                $lte: new Date(filters.dischargeDateEnd),
-              },
-            },
-          },
+          "archetype_node_id": "at0002",
+          "value.value": { $regex: new RegExp(`^${dischargeDateStartISO}`), $options: 'i' } 
         },
       },
     });
