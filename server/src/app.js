@@ -54,7 +54,7 @@ const buildQuery = (filters) => {
           items: {
             $elemMatch: {
               archetype_node_id: "at0010",
-              "value.value": filters.reasonForEncounter,
+              "value.value": filters.reasonForEncounter.toUpperCase(),
             },
           },
         },
@@ -86,7 +86,7 @@ const buildQuery = (filters) => {
           items: {
             $elemMatch: {
               archetype_node_id: "at0028",
-              "value.value": filters.state,
+              "value.value": filters.state.toUpperCase(),
             },
           },
         },
@@ -234,8 +234,6 @@ const buildQuery = (filters) => {
     query["composer.name"] = filters.committerName;
   }
 
-  console.log(query["content"].$elemMatch.$and[0]);
-
   return query;
 };
 
@@ -248,7 +246,6 @@ app.post("/api/filter", async (req, res) => {
     // Directly query the MongoDB collection using Mongoose
     const db = mongoose.connection.db;
     const compositions = await db.collection("documents").find(query).toArray();
-    console.log(compositions);
 
     res.status(200).json(compositions);
   } catch (err) {
