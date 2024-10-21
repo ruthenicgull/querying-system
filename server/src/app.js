@@ -54,7 +54,7 @@ const buildQuery = (filters) => {
           items: {
             $elemMatch: {
               archetype_node_id: "at0010",
-              "value.value": filters.reasonForEncounter,
+              "value.value": filters.reasonForEncounter.toUpperCase(),
             },
           },
         },
@@ -86,7 +86,7 @@ const buildQuery = (filters) => {
           items: {
             $elemMatch: {
               archetype_node_id: "at0028",
-              "value.value": filters.state,
+              "value.value": filters.state.toUpperCase(),
             },
           },
         },
@@ -113,23 +113,25 @@ const buildQuery = (filters) => {
     });
   }
 
+  // Helper function to convert DD-MM-YYYY to ISO (YYYY-MM-DD)
   function convertToISO(dateString) {
     const [day, month, year] = dateString.split("-");
     return `${day}-${month}-${year}T`; // ISO format
   }
   if (filters.dischargeDateStart && filters.dischargeDateEnd) {
-    const dischargeDateStartISO = convertToISO(filters.dischargeDateStart);
-    const dischargeDateEndISO = convertToISO(filters.dischargeDateEnd)
-
-    console.log(dischargeDateStartISO);
-    console.log(dischargeDateEndISO);
-
-    
     query["content"].$elemMatch.$and.push({
       "data.items": {
         $elemMatch: {
-          "archetype_node_id": "at0002",
-          "value.value": { $regex: new RegExp(`^${dischargeDateStartISO}`), $options: 'i' } 
+          archetype_node_id: "openEHR-EHR-ADMIN_ENTRY.patient_discharge.v1",
+          items: {
+            $elemMatch: {
+              archetype_node_id: "at0002",
+              "value.value": {
+                $gte: new Date(filters.dischargeDateStart),
+                $lte: new Date(filters.dischargeDateEnd),
+              },
+            },
+          },
         },
       },
     });
@@ -236,8 +238,6 @@ const buildQuery = (filters) => {
     query["composer.name"] = filters.committerName;
   }
 
-  console.log(query["content"].$elemMatch.$and[0]);
-
   return query;
 };
 
@@ -250,7 +250,6 @@ app.post("/api/filter", async (req, res) => {
     // Directly query the MongoDB collection using Mongoose
     const db = mongoose.connection.db;
     const compositions = await db.collection("documents").find(query).toArray();
-    console.log(compositions);
 
     res.status(200).json(compositions);
   } catch (err) {
