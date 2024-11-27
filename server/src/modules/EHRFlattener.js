@@ -1,4 +1,107 @@
 class EHRFlattener {
+
+  flattenBariatricEHR(ehrData) {
+    // Initialize the flattened object
+    const flattened = {};
+  
+    // Helper function to safely extract nested values
+    const getValue = (path, obj) => {
+      return path.reduce((acc, key) => 
+        (acc && acc[key] !== undefined) ? acc[key] : undefined, obj);
+    };
+  
+    // Extract general patient data
+    const generalData = getValue(['content', 0, 'data', 'items', 'items'], ehrData);
+    if (generalData) {
+      generalData.forEach(item => {
+        switch(item.name.value) {
+          case 'issue date':
+            flattened.issueDate = item.value.value;
+            break;
+          case 'reason for encounter':
+            flattened.reasonForEncounter = item.value.value;
+            break;
+          case 'healthcare unit':
+            flattened.healthcareUnit = item.value.value;
+            break;
+          case 'State':
+            flattened.state = item.value.value;
+            break;
+          case 'patient age':
+            flattened.patientAge = item.value.magnitude;
+            break;
+        }
+      });
+    }
+  
+    // Extract discharge information
+    const dischargeData = getValue(['content', 1, 'data', 'items'], ehrData);
+    if (dischargeData) {
+      dischargeData.forEach(item => {
+        switch(item.name.value) {
+          case 'date of discharge':
+            flattened.dischargeDate = item.value.value;
+            break;
+          case 'reason for discharge':
+            flattened.dischargeReason = item.value.value;
+            break;
+        }
+      });
+    }
+  
+    // Extract bariatric surgery evaluation
+    const surgeryEvaluation = getValue(['content', 2, 'data', 'items'], ehrData);
+    if (surgeryEvaluation) {
+      surgeryEvaluation.forEach(item => {
+        switch(item.name.value) {
+          case 'Baros score':
+            flattened.barosScore = item.value.value;
+            break;
+          case 'Baros table':
+            flattened.barosTable = item.value.value;
+            break;
+          case 'duration of follow-up (months)':
+            flattened.followUpDuration = item.null_flavour ? 'Unknown' : item.value;
+            break;
+        }
+      });
+    }
+  
+    // Extract problem/diagnosis
+    const problemDiagnosis = getValue(['content', 3, 'data', 'items'], ehrData);
+    if (problemDiagnosis) {
+      problemDiagnosis.forEach(item => {
+        switch(item.name.value) {
+          case 'Problem':
+            flattened.primaryDiagnosis = item.value.value;
+            break;
+          case 'Secondary Diagnosis':
+            flattened.secondaryDiagnosis = item.value.value;
+            break;
+          case 'Associated causes':
+            flattened.associatedCauses = item.value.value;
+            break;
+        }
+      });
+    }
+  
+    // Extract procedure information
+    const procedure = getValue(['content', 4], ehrData);
+    if (procedure) {
+      flattened.procedureTime = procedure.time.value;
+      flattened.procedureName = getValue(['description', 'items', 'value', 'value'], procedure);
+      flattened.procedureStatus = getValue(['ism_transition', 'current_state', 'value'], procedure);
+    }
+  
+    // Extract Body Mass Index (if available)
+    const bmiObservation = getValue(['content', 5], ehrData);
+    if (bmiObservation && bmiObservation.data.events.data.items.null_flavour) {
+      flattened.bodyMassIndex = 'Unknown';
+    }
+  
+    return flattened;
+  }
+
   flattenChemotherapyEHR(ehr) {
     // Extract general data
     const generalData = ehr.content
