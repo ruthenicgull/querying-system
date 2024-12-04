@@ -1,8 +1,10 @@
 import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
+import EHRFlattener from "./modules/EHRFlattener.js";
 
 const app = express();
+const ehrFlattener = new EHRFlattener();
 
 app.use(
   cors({
@@ -252,7 +254,24 @@ app.post("/api/filter", async (req, res) => {
     const db = mongoose.connection.db;
     const compositions = await db.collection("documents").find(query).toArray();
 
-    res.status(200).json(compositions);
+    let flattenedCompositions = [];
+
+    if (filters.reasonForEncounter.toUpperCase() === "QUIMIOTERAPIA") {
+      flattenedCompositions = compositions.map((composition) =>
+        ehrFlattener.flattenChemotherapyEHR(composition)
+      );
+    } else if (
+      filters.reasonForEncounter.toUpperCase() === "CIRURGIA BARIATRICA"
+    ) {
+      flattenedCompositions = compositions.map((composition) =>
+        ehrFlattener.flattenBariatricEHR(composition)
+      );
+    }
+
+    res.status(200).json({
+      compositions: flattenedCompositions,
+      query: JSON.stringify(query, null, 2),
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
