@@ -1,0 +1,69 @@
+{
+  "name": "Outpatient high complexity procedures",
+  "children": [
+    {
+      "name": "HCPA",
+      "children": [
+        {
+          "name": "General Data",
+          "children": [
+            { "name": "issue date" },
+            { "name": "reason for encounter" },
+            { "name": "healthcare unit" },
+            { "name": "State" },
+            { "name": "patient age" }
+          ]
+        },
+        {
+          "name": "chemotherapy",
+          "children": [
+            { "name": "duration of treatment" },
+            { "name": "schema" },
+            { "name": "date of beginning of chemotherapy" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Patient Discharge",
+      "children": [
+        { "name": "date of discharge" },
+        { "name": "reason for discharge" }
+      ]
+    },
+    {
+      "name": "Problem/Diagnosis",
+      "children": [
+        { "name": "Problem" },
+        { "name": "Secondary Diagnosis" },
+        { "name": "Associated Causes" },
+        { "name": "Invaded regional linphonodes" },
+        {
+          "name": "Tumour - TNM Cancer staging",
+          "children": [
+            {
+              "name": "Clinical (cTNM)",
+              "children": [{ "name": "Clinical Staging" }]
+            },
+            {
+              "name": "Pathological (pTNM)",
+              "children": [
+                { "name": "Histopathological grading (G)" },
+                { "name:": "date of pathological identification" }
+              ]
+            },
+            {
+              "name": "topography"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Procedure undertaken",
+      "children": [
+        { "name": "Procedure List", "children": [{ "name": "Procedure" }] }
+      ]
+    }
+  ]
+}

@@ -1,4 +1,6 @@
-class EHRFlattener {
+import { inspect } from "util";
+
+export default class EHRFlattener {
   flattenBariatricEHR(ehrData) {
     // Initialize the flattened object
     const flattened = {};
@@ -255,56 +257,161 @@ class EHRFlattener {
   }
 
   flattenRadiotherapyEHR(ehr) {
-    // Helper function to safely extract nested values
-    const getValue = (path, obj) => {
-      return path
-        .split(".")
-        .reduce(
-          (acc, part) =>
-            acc && acc[part] !== undefined ? acc[part] : undefined,
-          obj
-        );
-    };
+    // Extract general data
+    const generalData = ehr.content
+      .find(
+        (item) =>
+          item.archetype_node_id ===
+          "openEHR-EHR-ADMIN_ENTRY.high_complexity_procedures_sus.v1"
+      )
+      ?.data.items.find((item) => item.name.value === "General data")?.items;
 
-    // Extract general patient and administrative data
-    const generalData = getValue("content.0.data.items.0.items", ehr);
-    const radiotherapyData = getValue("content.0.data.items.1.items", ehr);
-    const problemDiagnosis = getValue("content.2.data.items", ehr);
-    const procedure = getValue("content.3.description.items", ehr);
+    // Extract radiotherapy data
+    const radiotherapyData = ehr.content
+      .find(
+        (item) =>
+          item.archetype_node_id ===
+          "openEHR-EHR-ADMIN_ENTRY.high_complexity_procedures_sus.v1"
+      )
+      ?.data.items.find((item) => item.name.value === "radiotherapy")?.items;
 
-    // Flatten the EHR into a single object
+    // Extract problem/diagnosis data
+    const problemDiagnosisData = ehr.content.find(
+      (item) =>
+        item.archetype_node_id ===
+        "openEHR-EHR-EVALUATION.problem_diagnosis-sus.v1"
+    )?.data.items;
+
+    // Extract procedure data
+    const procedureData = ehr.content.find(
+      (item) => item.archetype_node_id === "openEHR-EHR-ACTION.procedure-sus.v1"
+    )?.description.items;
+
+    // Flatten general data
+    const generalInfo = generalData
+      ? {
+          issueDate: generalData.find(
+            (item) => item.name.value === "issue date"
+          )?.value?.value,
+          reasonForEncounter: generalData.find(
+            (item) => item.name.value === "reason for encounter"
+          )?.value?.value,
+          healthcareUnit: generalData.find(
+            (item) => item.name.value === "healthcare unit"
+          )?.value?.value,
+          state: generalData.find((item) => item.name.value === "State")?.value
+            ?.value,
+          patientAge: generalData.find(
+            (item) => item.name.value === "patient age"
+          )?.value?.magnitude,
+        }
+      : {};
+
+    // Flatten radiotherapy data
+    const radiotherapyInfo = radiotherapyData
+      ? {
+          radiotherapyStartDate: radiotherapyData?.value?.value,
+        }
+      : {};
+
+    // Flatten problem/diagnosis data
+    const diagnosisInfo = problemDiagnosisData
+      ? {
+          primaryDiagnosis: problemDiagnosisData.find(
+            (item) => item.name.value === "Problem"
+          )?.value?.value,
+          primaryDiagnosisCode: problemDiagnosisData.find(
+            (item) => item.name.value === "Problem"
+          )?.value?.defining_code?.code_string,
+          secondaryDiagnosis: problemDiagnosisData.find(
+            (item) => item.name.value === "Secondary Diagnosis"
+          )?.value?.value,
+          associatedCauses: problemDiagnosisData.find(
+            (item) => item.name.value === "Associated causes"
+          )?.value?.value,
+          invasedRegionalLymphNodes: problemDiagnosisData.find(
+            (item) => item.name.value === "Invaded regional linphonodes"
+          )?.value?.value,
+        }
+      : {};
+
+    // Flatten TNM staging data
+    const tnmStaging = problemDiagnosisData?.find(
+      (item) => item.name.value === "Tumour - TNM Cancer staging"
+    )?.items;
+
+    const stagingInfo = tnmStaging
+      ? {
+          clinicalStaging: tnmStaging.find(
+            (item) => item.name.value === "Clinical (cTNM)"
+          )?.items?.value,
+          pathologicalStaging: {
+            histopathologicalGrading: tnmStaging
+              .find((item) => item.name.value === "Pathological (pTNM)")
+              ?.items?.find(
+                (subItem) =>
+                  subItem.name.value === "Histopathological grading (G)"
+              )?.null_flavour?.value,
+            pathologicalIdentificationDate: tnmStaging
+              .find((item) => item.name.value === "Pathological (pTNM)")
+              ?.items?.find(
+                (subItem) =>
+                  subItem.name.value === "date of pathological identification"
+              )?.value?.value,
+          },
+          topography: tnmStaging.find(
+            (item) => item.name.value === "topography"
+          )?.value?.value,
+        }
+      : {};
+
+    // Flatten procedure data
+    const procedureInfo = procedureData
+      ? {
+          procedure: procedureData.find(
+            (item) => item.name.value === "Procedure"
+          )?.value?.value,
+          procedureCode: procedureData.find(
+            (item) => item.name.value === "Procedure"
+          )?.value?.defining_code?.code_string,
+          irradiatedArea1: procedureData.find(
+            (item) => item.name.value === "irradiated area 1"
+          )?.value?.value,
+          irradiatedArea2: procedureData.find(
+            (item) => item.name.value === "irradiated area 2"
+          )?.value?.value,
+          fieldsInsertions1: procedureData.find(
+            (item) => item.name.value === "fields/insertions 1"
+          )?.value?.magnitude,
+          fieldsInsertions2: procedureData.find(
+            (item) => item.name.value === "fields/insertions 2"
+          )?.value?.magnitude,
+        }
+      : {};
+
+    // Combine all flattened data
     return {
-      // General Information
-      issueDate: getValue("9.value.value", generalData),
-      reasonForEncounter: getValue("10.value.value", generalData),
-      healthcareUnit: getValue("11.value.value", generalData),
-      state: getValue("28.value.value", generalData),
-      patientAge: getValue("12.value.magnitude", generalData),
-
-      // Radiotherapy Details
-      radiotherapyStartDate: getValue("32.value.value", radiotherapyData),
-
-      // Problem/Diagnosis
-      primaryDiagnosis: getValue("2.1.value.value", problemDiagnosis),
-      secondaryDiagnosis: getValue("0.1.value.value", problemDiagnosis),
-      associatedCauses: getValue("0.2.value.value", problemDiagnosis),
-      invasedRegionalLymphNodes: getValue("0.4.value.value", problemDiagnosis),
-      clinicalStaging: getValue("2.2.items.10.value.value", problemDiagnosis),
-      pathologicalIdentificationDate: getValue(
-        "2.6.items.0.44.value.value",
-        problemDiagnosis
-      ),
-
-      // Procedure Details
-      procedureName: getValue("2.value.value", procedure),
-      irradiatedArea1: getValue("0.59.value.value", procedure),
-      fieldsInsertions1: getValue("0.61.0.magnitude", procedure),
-      fieldsInsertions2: getValue("0.61.1.magnitude", procedure),
-
-      // Discharge Information
-      dischargeReason: getValue("content.1.data.items.1.value.value", ehr),
+      ...generalInfo,
+      ...radiotherapyInfo,
+      ...diagnosisInfo,
+      ...stagingInfo,
+      ...procedureInfo,
     };
   }
-}
 
-export default EHRFlattener;
+  flattenEHRS(ehrs) {
+    return ehrs.map((ehr) => {
+      const data = ehr.content[0].data;
+      return Array.isArray(data.items) &&
+        data.items[0].items[1].value.value === "QUIMIOTERAPIA"
+        ? this.flattenChemotherapyEHR(ehr)
+        : Array.isArray(data.items) &&
+          data.items[0].items[1].value.value === "RADIOTERAPIA"
+        ? this.flattenRadiotherapyEHR(ehr)
+        : !Array.isArray(data.items) &&
+          data.items.items[1].value.value === "CIRURGIA BARIATRICA"
+        ? this.flattenBariatricEHR(ehr)
+        : {};
+    });
+  }
+}
